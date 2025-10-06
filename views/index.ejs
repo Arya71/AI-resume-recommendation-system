@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Hiring Agent</title>
+    <link rel="stylesheet" href="/output.css">
+</head>
+<body class="bg-white dark:bg-slate-900 text-gray-800 dark:text-white transition-colors duration-300">
+    <div class="container mx-auto p-8">
+        <div class="absolute top-4 right-4">
+            <button id="theme-toggle" class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-800 focus:outline-none">
+                <svg id="theme-toggle-dark-icon" class="hidden h-6 w-6" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                <svg id="theme-toggle-light-icon" class="hidden h-6 w-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 5.05A1 1 0 016.465 3.636l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 010-1.414zM5 11a1 1 0 100-2H4a1 1 0 100 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+            </button>
+        </div>
+
+        <header class="text-center mb-12">
+            <h1 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-600">AI Hiring Agent</h1>
+            <p class="text-gray-600 dark:text-slate-400 mt-2">Get instant job recommendations from a resume or select a candidate profile below.</p>
+        </header>
+
+        <section class="bg-gray-50 dark:bg-slate-800 p-8 rounded-xl border border-gray-200 dark:border-slate-700 mb-12">
+            <h2 class="text-3xl font-semibold text-center mb-6 text-gray-900 dark:text-white">🚀 Get Instant Recommendations</h2>
+            <form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data" class="max-w-xl mx-auto text-center">
+                <label for="resume" class="block mb-2 text-sm font-medium text-gray-700 dark:text-slate-300">Upload Resume (PDF or DOCX)</label>
+                <input type="file" name="resume" id="resume" class="block w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500 file:text-white hover:file:bg-purple-600 cursor-pointer" required>
+                <button type="submit" class="mt-6 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-8 rounded-full hover:opacity-90 transition-opacity">Generate Recommendations</button>
+            </form>
+        </section>
+
+        <hr class="border-gray-200 dark:border-slate-700 my-12">
+
+        <h2 class="text-3xl font-semibold text-center mb-6 text-gray-900 dark:text-white">Or, Select an Existing Profile</h2>
+        <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <% students.forEach(student => { %>
+                <a href="/recommend/<%= student._id %>" class="student-card bg-white dark:bg-slate-800 p-6 rounded-xl border border-gray-200 dark:border-slate-700 hover:border-purple-500 transition-all duration-300 transform hover:-translate-y-1">
+                    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white"><%= student.name %></h2>
+                    <p class="text-gray-500 dark:text-slate-400 mb-4"><%= student.major %></p>
+                    <div class="flex flex-wrap gap-2">
+                        <% student.skills.forEach(skill => { %>
+                            <span class="bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300 text-xs font-medium px-2.5 py-1 rounded-full"><%= skill %></span>
+                        <% }); %>
+                    </div>
+                </a>
+            <% }); %>
+        </main>
+    </div>
+    
+    <div id="loading-spinner" class="hidden fixed inset-0 bg-slate-900 bg-opacity-80 flex justify-center items-center z-50">
+        <div class="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-purple-500"></div>
+    </div>
+    
+    <script>
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            themeToggleLightIcon.classList.remove('hidden');
+            document.documentElement.classList.add('dark');
+        } else {
+            themeToggleDarkIcon.classList.remove('hidden');
+            document.documentElement.classList.remove('dark');
+        }
+
+        themeToggleBtn.addEventListener('click', function() {
+            themeToggleDarkIcon.classList.toggle('hidden');
+            themeToggleLightIcon.classList.toggle('hidden');
+
+            if (localStorage.getItem('color-theme')) {
+                if (localStorage.getItem('color-theme') === 'light') {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                }
+            } else {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                }
+            }
+        });
+    </script>
+
+    <script>
+        const studentLinks = document.querySelectorAll('.student-card');
+        const uploadForm = document.getElementById('upload-form');
+        const spinner = document.getElementById('loading-spinner');
+
+        studentLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                spinner.classList.remove('hidden');
+            });
+        });
+
+        uploadForm.addEventListener('submit', () => {
+            spinner.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
